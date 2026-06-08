@@ -1,11 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>My GitHub Pages Site</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VM-Kassan 2026 ⚽ World Cup Betting Tracker</title>
+  <meta name="description" content="The crew's World Cup 2026 schedule, group tables, bracket and betting leaderboard — auto-updated daily." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800;900&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./assets/css/styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
 </head>
 <body>
-    <h1>Hello, World!</h1>
-    <p>My GitHub Pages site is officially live.</p>
+  <div class="pitch-bg" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div class="brand">
+        <span class="brand-mark">⚽</span>
+        <div class="brand-text">
+          <h1>VM&#8209;KASSAN <span class="yr">’26</span></h1>
+          <p class="tagline" id="tagline">26 nations of regret incoming</p>
+        </div>
+      </div>
+      <div class="status-chip" id="dataStatus" title="When the data was last synced">
+        <span class="dot"></span><span id="dataStatusText">loading…</span>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab is-active" data-view="schedule">📅 Schedule</button>
+      <button class="tab" data-view="groups">📊 Groups</button>
+      <button class="tab" data-view="bracket">🏆 Bracket</button>
+      <button class="tab" data-view="betting">💰 The Kassa</button>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <!-- SCHEDULE -->
+    <section class="view is-active" id="view-schedule">
+      <div class="view-head">
+        <h2>Match Schedule</h2>
+        <div class="seg" id="scheduleFilter">
+          <button class="seg-btn is-active" data-filter="all">All</button>
+          <button class="seg-btn" data-filter="group">Group stage</button>
+          <button class="seg-btn" data-filter="ko">Knockout</button>
+          <button class="seg-btn" data-filter="today">Today</button>
+        </div>
+      </div>
+      <p class="hint">Kick&#8209;off times shown in Swedish time 🇸🇪 (Europe/Stockholm).</p>
+      <div id="scheduleList" class="schedule-list"></div>
+    </section>
+
+    <!-- GROUPS -->
+    <section class="view" id="view-groups">
+      <div class="view-head"><h2>Group Tables</h2></div>
+      <p class="hint">Top 2 of each group advance, plus the 8 best 3rd&#8209;placed teams. Tables update daily.</p>
+      <div id="groupGrid" class="group-grid"></div>
+    </section>
+
+    <!-- BRACKET -->
+    <section class="view" id="view-bracket">
+      <div class="view-head"><h2>Knockout Bracket</h2></div>
+      <p class="hint">Round of 32 → Final. Times in Swedish time 🇸🇪. Fills in as teams qualify.</p>
+      <div class="bracket-scroll">
+        <div id="bracket" class="bracket"></div>
+      </div>
+    </section>
+
+    <!-- BETTING -->
+    <section class="view" id="view-betting">
+      <div class="view-head"><h2>The Kassa 💰</h2></div>
+
+      <div class="leader-row" id="leaderRow"></div>
+
+      <div class="board">
+        <h3 class="board-title">Standings <span class="muted" id="asOf"></span></h3>
+        <div id="moneyBoard" class="money-board"></div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-head">
+          <h3>Performance vs OMXS30 📈</h3>
+          <div class="seg" id="chartMode">
+            <button class="seg-btn is-active" data-mode="balance">SEK</button>
+            <button class="seg-btn" data-mode="pct">% change</button>
+          </div>
+        </div>
+        <p class="hint" id="chartQuip">Everyone starts at 200 SEK. The OMXS30 is normalised to 200 so you can see who's beating the market.</p>
+        <div class="chart-wrap"><canvas id="moneyChart"></canvas></div>
+      </div>
+
+      <div class="editor">
+        <h3 class="board-title">Log a day</h3>
+        <p class="hint">Pick a date, type everyone's end&#8209;of&#8209;day balance, hit <strong>Apply</strong> to preview, then <strong>Export</strong> and commit <code>data/betting.json</code> so the whole crew sees it.</p>
+        <div class="editor-controls">
+          <label>Date
+            <input type="date" id="entryDate" />
+          </label>
+          <button class="btn ghost" id="loadLatest">Prefill from latest</button>
+        </div>
+        <div id="editorGrid" class="editor-grid"></div>
+        <div class="editor-actions">
+          <button class="btn" id="applyEntry">Apply to preview</button>
+          <button class="btn gold" id="exportBtn">⬇ Export betting.json</button>
+          <button class="btn ghost" id="copyBtn">📋 Copy JSON</button>
+          <button class="btn ghost danger" id="resetBtn">↺ Reset preview</button>
+        </div>
+        <p class="hint save-note" id="saveNote"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>Built for the crew · auto&#8209;synced via GitHub Actions</span>
+    <span class="foot-meme" id="footMeme">may your parlays hit and your group survive 🙏</span>
+  </footer>
+
+  <script src="./assets/js/app.js" defer></script>
 </body>
 </html>

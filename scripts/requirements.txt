@@ -1,0 +1,2 @@
+# fetch_data.py uses only the Python standard library — no pip installs required.
+# (urllib, json, csv, datetime). Listed here for clarity / future additions.

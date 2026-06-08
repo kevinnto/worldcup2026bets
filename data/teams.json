@@ -1,0 +1,77 @@
+{
+  "_comment": "Static reference for WC2026 — the 12 confirmed groups (Final Draw, 5 Dec 2025). 'code' drives the flag emoji. 'aliases' help the fetch script match names coming back from the football API. This file is NOT overwritten by the GitHub Action.",
+  "groups": {
+    "A": [
+      { "team": "Mexico", "code": "MX", "aliases": ["Mexico"] },
+      { "team": "South Korea", "code": "KR", "aliases": ["Korea Republic", "South Korea", "Korea"] },
+      { "team": "Czechia", "code": "CZ", "aliases": ["Czech Republic", "Czechia"] },
+      { "team": "South Africa", "code": "ZA", "aliases": ["South Africa"] }
+    ],
+    "B": [
+      { "team": "Canada", "code": "CA", "aliases": ["Canada"] },
+      { "team": "Switzerland", "code": "CH", "aliases": ["Switzerland"] },
+      { "team": "Qatar", "code": "QA", "aliases": ["Qatar"] },
+      { "team": "Bosnia & Herzegovina", "code": "BA", "aliases": ["Bosnia and Herzegovina", "Bosnia-Herzegovina", "Bosnia & Herzegovina"] }
+    ],
+    "C": [
+      { "team": "Brazil", "code": "BR", "aliases": ["Brazil"] },
+      { "team": "Morocco", "code": "MA", "aliases": ["Morocco"] },
+      { "team": "Scotland", "code": "GB-SCT", "aliases": ["Scotland"] },
+      { "team": "Haiti", "code": "HT", "aliases": ["Haiti"] }
+    ],
+    "D": [
+      { "team": "USA", "code": "US", "aliases": ["United States", "USA", "United States of America"] },
+      { "team": "Paraguay", "code": "PY", "aliases": ["Paraguay"] },
+      { "team": "Australia", "code": "AU", "aliases": ["Australia"] },
+      { "team": "Türkiye", "code": "TR", "aliases": ["Turkey", "Turkiye", "Türkiye"] }
+    ],
+    "E": [
+      { "team": "Germany", "code": "DE", "aliases": ["Germany"] },
+      { "team": "Ivory Coast", "code": "CI", "aliases": ["Ivory Coast", "Cote D'Ivoire", "Côte d'Ivoire"] },
+      { "team": "Ecuador", "code": "EC", "aliases": ["Ecuador"] },
+      { "team": "Curaçao", "code": "CW", "aliases": ["Curacao", "Curaçao"] }
+    ],
+    "F": [
+      { "team": "Netherlands", "code": "NL", "aliases": ["Netherlands", "Holland"] },
+      { "team": "Sweden", "code": "SE", "aliases": ["Sweden"] },
+      { "team": "Tunisia", "code": "TN", "aliases": ["Tunisia"] },
+      { "team": "Japan", "code": "JP", "aliases": ["Japan"] }
+    ],
+    "G": [
+      { "team": "Belgium", "code": "BE", "aliases": ["Belgium"] },
+      { "team": "Iran", "code": "IR", "aliases": ["Iran", "IR Iran"] },
+      { "team": "New Zealand", "code": "NZ", "aliases": ["New Zealand"] },
+      { "team": "Egypt", "code": "EG", "aliases": ["Egypt"] }
+    ],
+    "H": [
+      { "team": "Spain", "code": "ES", "aliases": ["Spain"] },
+      { "team": "Cape Verde", "code": "CV", "aliases": ["Cape Verde", "Cabo Verde"] },
+      { "team": "Saudi Arabia", "code": "SA", "aliases": ["Saudi Arabia"] },
+      { "team": "Uruguay", "code": "UY", "aliases": ["Uruguay"] }
+    ],
+    "I": [
+      { "team": "France", "code": "FR", "aliases": ["France"] },
+      { "team": "Senegal", "code": "SN", "aliases": ["Senegal"] },
+      { "team": "Iraq", "code": "IQ", "aliases": ["Iraq"] },
+      { "team": "Norway", "code": "NO", "aliases": ["Norway"] }
+    ],
+    "J": [
+      { "team": "Argentina", "code": "AR", "aliases": ["Argentina"] },
+      { "team": "Algeria", "code": "DZ", "aliases": ["Algeria"] },
+      { "team": "Austria", "code": "AT", "aliases": ["Austria"] },
+      { "team": "Jordan", "code": "JO", "aliases": ["Jordan"] }
+    ],
+    "K": [
+      { "team": "Portugal", "code": "PT", "aliases": ["Portugal"] },
+      { "team": "DR Congo", "code": "CD", "aliases": ["DR Congo", "Congo DR", "Democratic Republic of the Congo", "Congo Democratic Republic"] },
+      { "team": "Uzbekistan", "code": "UZ", "aliases": ["Uzbekistan"] },
+      { "team": "Colombia", "code": "CO", "aliases": ["Colombia"] }
+    ],
+    "L": [
+      { "team": "England", "code": "GB-ENG", "aliases": ["England"] },
+      { "team": "Croatia", "code": "HR", "aliases": ["Croatia"] },
+      { "team": "Ghana", "code": "GH", "aliases": ["Ghana"] },
+      { "team": "Panama", "code": "PA", "aliases": ["Panama"] }
+    ]
+  }
+}
