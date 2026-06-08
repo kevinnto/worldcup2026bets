@@ -1,12 +1,9 @@
 {
-  "_comment": "Shared betting ledger. Each person starts at 200 SEK. Add one object to 'entries' per day with everyone's end-of-day balance. The website can generate this JSON for you (Betting tab -> Export). Commit this file to make changes visible to the whole group.",
-  "players": ["Arvid", "Edvin", "Kevin", "Felix", "Wictor", "Linus", "Filip"],
-  "startingAmount": 200,
+  "startAmount": 200,
   "currency": "SEK",
-  "entries": [
-    {
-      "date": "2026-06-11",
-      "balances": { "Arvid": 200, "Edvin": 200, "Kevin": 200, "Felix": 200, "Wictor": 200, "Linus": 200, "Filip": 200 }
-    }
-  ]
+  "players": ["Arvid", "Edvin", "Kevin", "Felix", "Wictor", "Linus", "Filip"],
+  "note": "balances[date][player] = saldo i slutet av dagen. Alla startar pa 200 SEK. Redigera i appen och ladda ner denna fil, eller andra direkt har och committa.",
+  "balances": {
+    "2026-06-11": { "Arvid": 200, "Edvin": 200, "Kevin": 200, "Felix": 200, "Wictor": 200, "Linus": 200, "Filip": 200 }
+  }
 }
