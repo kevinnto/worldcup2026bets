@@ -38,17 +38,33 @@ A static website for tracking betting money during the 2026 FIFA World Cup (11 J
 2. Go to **Settings → Pages**, set **Source** to "Deploy from a branch", branch `main`, folder `/ (root)`, and save
 3. Wait for the build, then open the published URL
 
-## Enable live betting (Firebase, ~5 minutes, free)
+## Enable live betting (Firebase)
 
-This is what lets a friend submit their amount and have everyone's site update instantly. Without it, the site still works in local mode (see below).
+This makes the site shared and real-time: anyone submits a balance and every open browser updates within a second. Without it the site still works, but balances are browser-local. The **Stålarna** tab shows step-by-step instructions when you are not connected.
 
-1. Go to the Firebase console (console.firebase.google.com) and click **Add project** (any name)
-2. In the left menu, open **Build → Realtime Database → Create database**. Pick a location, start in **locked mode**
-3. Open the **Rules** tab and paste the rules below, then **Publish**
-4. Open **Project settings** (gear icon) → **General** → scroll to **Your apps** → click the web icon `</>` → register the app → copy the `firebaseConfig` object
-5. Paste it into `js/config.js`, replacing the placeholder, and commit
+Estimated time: ~10 minutes. Firebase free tier (Spark) is more than enough for 7 friends.
 
-Database rules (validate the shape, allow the group to read and write):
+### Step 1 — Create a Firebase project
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com)
+2. Click **Add project**
+3. Enter any project name (e.g. `vm2026-gänget`) and click through the setup screens
+4. Click **Create project** and wait for it to finish
+
+### Step 2 — Enable Realtime Database
+
+1. In the left-hand menu click **Build → Realtime Database**
+2. Click **Create database**
+3. Choose a location — **europe-west1 (Belgium)** is closest for Sweden
+4. When asked about security rules, choose **Start in locked mode**
+5. Click **Enable**
+
+### Step 3 — Set the security rules
+
+These rules let your group of friends read and write, and reject values that aren't numbers.
+
+1. In the Realtime Database page, click the **Rules** tab
+2. Delete everything in the editor and paste the following:
 
 ```json
 {
@@ -58,7 +74,7 @@ Database rules (validate the shape, allow the group to read and write):
       ".write": true,
       "$date": {
         "$player": {
-          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000"
+          ".validate": "newData.isNumber() && newData.val() >= 0"
         }
       }
     }
@@ -66,7 +82,47 @@ Database rules (validate the shape, allow the group to read and write):
 }
 ```
 
-Security note: these rules are public, which is fine for a small group of friends (worst case, someone edits a number). To lock it down further, enable Firebase **Anonymous Authentication** and change `.read`/`.write` to `"auth != null"`. The header on the betting view shows **🟢 Live** when Firebase is connected, or **💾 Lokalt läge** when it is not.
+3. Click **Publish**
+
+The rules are public-read-write, which is fine for a small friend group (the worst case is that someone edits a number). If you want to lock it down, enable **Anonymous Authentication** and add `"auth != null"` as the read/write condition.
+
+### Step 4 — Copy your configuration
+
+1. Click the gear icon (⚙) next to "Project Overview" in the top-left
+2. Choose **Project settings**
+3. Scroll down to **Your apps**
+4. Click the web icon **`</>`** to add a web app
+5. Enter any nickname (e.g. `vm2026`) and click **Register app**
+6. You will see a code block containing a `firebaseConfig` object — copy the whole object (from `{` to `}`)
+
+It looks like this:
+
+```js
+{
+  apiKey: "AIza...",
+  authDomain: "vm2026-gänget.firebaseapp.com",
+  databaseURL: "https://vm2026-gänget-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "vm2026-gänget",
+  appId: "1:123456789:web:abc123"
+}
+```
+
+### Step 5 — Paste and deploy
+
+1. Open `js/config.js` in your repository
+2. Replace the entire `window.FIREBASE_CONFIG = { … }` placeholder with your copied object
+3. Commit and push to the `main` branch
+4. Wait for GitHub Pages to redeploy (usually under a minute)
+5. Reload the site — the **Stålarna** tab should now show **🟢 Live** instead of **💾 Lokalt läge**
+
+### Common issues
+
+| Problem | Fix |
+|---|---|
+| Status still shows Lokalt läge after deploy | Check that `databaseURL` in config.js matches exactly what Firebase shows (including the region suffix) |
+| Data updates on one device but not another | Make sure you committed the updated `config.js` and GitHub Pages has redeployed |
+| GitHub Action fails with a permissions error | Go to **Settings → Actions → General → Workflow permissions** and select **Read and write permissions** |
+| Want to see what is stored | In the Firebase console, open **Realtime Database → Data** — you will see the `balances` tree update in real time |
 
 ## Enable the daily auto-refresh
 

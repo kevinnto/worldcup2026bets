@@ -18,6 +18,8 @@
 <body>
   <div class="grain" aria-hidden="true"></div>
 
+  <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;display:none" aria-hidden="true"></canvas>
+
   <header class="hero">
     <div class="hero-stripes" aria-hidden="true"></div>
     <div class="hero-inner">
@@ -35,7 +37,7 @@
     <button class="tab" data-view="money">💰 Stålarna</button>
   </nav>
 
-  <div id="meme-ticker" class="meme-ticker" aria-hidden="true"></div>
+  <div id="stats-bar" class="stats-bar" aria-live="polite"></div>
 
   <main id="app">
     <!-- SCHEDULE -->
@@ -98,6 +100,45 @@
           <button id="export-json" class="btn btn-ghost">⬇️ Ladda ner betting.json</button>
           <span class="hint" style="margin:0">Lokalt läge: dela med gänget genom att committa filen</span>
         </div>
+        <details id="firebase-guide" class="firebase-guide hidden">
+          <summary class="fg-summary">🔴 Lokalt läge · Koppla upp live på ~10 minuter</summary>
+          <ol class="setup-steps">
+            <li>
+              <strong>Skapa ett Firebase-projekt</strong>
+              <p>Gå till <a href="https://console.firebase.google.com" target="_blank" rel="noopener">console.firebase.google.com</a> · klicka <em>Add project</em> · välj ett namn · klicka dig igenom stegen · <em>Create project</em>.</p>
+            </li>
+            <li>
+              <strong>Aktivera Realtime Database</strong>
+              <p>I vänstermenyn: <em>Build → Realtime Database → Create database</em>. Välj närmaste region (t.ex. europe-west1). Välj <em>Start in locked mode</em> · klicka <em>Enable</em>.</p>
+            </li>
+            <li>
+              <strong>Uppdatera säkerhetsreglerna</strong>
+              <p>Klicka på fliken <em>Rules</em> · radera allt · klistra in nedanstående · klicka <em>Publish</em>.</p>
+              <pre class="fg-code">{
+  "rules": {
+    "balances": {
+      ".read": true,
+      ".write": true,
+      "$date": {
+        "$player": {
+          ".validate": "newData.isNumber() &amp;&amp; newData.val() &gt;= 0"
+        }
+      }
+    }
+  }
+}</pre>
+            </li>
+            <li>
+              <strong>Hämta din konfiguration</strong>
+              <p>Klicka på kugghjulet (⚙) → <em>Project settings</em> → rulla ned till <em>Your apps</em> → klicka webb-ikonen <em>&lt;/&gt;</em> → registrera appen med valfritt namn → kopiera det <code>firebaseConfig</code>-objekt som visas.</p>
+            </li>
+            <li>
+              <strong>Klistra in och committa</strong>
+              <p>Öppna <code>js/config.js</code> i repot → ersätt hela <code>window.FIREBASE_CONFIG = {…}</code> med din kopierade config → committa och pusha. Kom tillbaka hit och ladda om — statusindikatorn ovan ska bli <strong>🟢 Live</strong>.</p>
+              <p class="fg-note">⚠️ Kom ihåg att sätta <em>Workflow permissions → Read and write</em> under Settings → Actions i repot, annars kan GitHub Actions inte spara resultatdata.</p>
+            </li>
+          </ol>
+        </details>
       </div>
 
       <details class="history-wrap">
@@ -107,11 +148,5 @@
     </section>
   </main>
 
-  <footer class="footer">
-    <p class="foot-meme" id="foot-meme">"Det är inte spelmissbruk om det är VM." — Anonym i gänget</p>
-    <p class="foot-note">Data: spelschema fast · resultat &amp; OMXS30 hämtas dagligen via GitHub Actions ·
-      slutspelsträdets korsdragningar bekräftas av FIFA efter gruppspelet.
-      <span id="data-updated"></span></p>
-  </footer>
 </body>
 </html>

@@ -12,16 +12,6 @@ const DATA = { fixtures: null, results: null, omx: null, sp500: null, betting: n
 const DRAFT_KEY = 'wc2026_betting_draft_v1';
 const BETTING = { mode: 'local', ref: null };
 
-const MEMES = [
-  '"Jag har en känsla om den här." — sista ordet före konkurs',
-  'Värdet kan både öka och minska. Mest minska.',
-  'OMXS30 har aldrig satt allt på Panama att vinna gruppen.',
-  'Den som är skuldfri vid finalen bjuder på öl. 🍺',
-  'Singelspel är för fegisar. Sa han med 4 SEK kvar.',
-  'Statistiskt sett är nästa spel det som vänder allt.',
-  'Treornas tabell — där drömmar och ångest möts.',
-];
-
 /* ---------- helpers ---------- */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -368,22 +358,41 @@ function renderMoney() {
     </div>`;
 
   // board
+  if (days.length === 0) {
+    $('#leader-card').innerHTML = '<div class="empty-state">Ingen har registrerat något saldo ännu.<br>Var den modigaste — sätt dig i ledning! 🏆</div>';
+    $('#standings-money').innerHTML = '';
+    renderStatsBar();
+    renderChart([], {}, players);
+    renderHistory();
+    return;
+  }
+
+  // board
   $('#standings-money').innerHTML = ranked.map((p, i) => {
     const pct = (latest[p] / start - 1) * 100;
     const f = fmtPct(pct);
     const w = Math.max(8, (latest[p] / maxVal) * 160);
-    let emoji = '';
-    if (i === 0) emoji = '👑'; else if (latest[p] <= 0.01) emoji = '💀'; else emoji = pct >= 0 ? '📈' : '📉';
-    return `<div class="mrow">
+    const pidx = DATA.betting.players.indexOf(p);
+    const pc = PLAYER_COLORS[pidx % PLAYER_COLORS.length];
+    let tag = '';
+    if (i === 0) tag = '<span class="rank-tag rt-gold">👑 LIGALEDARE</span>';
+    else if (i === ranked.length - 1) tag = '<span class="rank-tag rt-red">💀 BOTTENSKRAPET</span>';
+    else if (pct > 60) tag = '<span class="rank-tag rt-lime">🚀 RAKET</span>';
+    return `<div class="mrow${i === 0 ? ' mrow-top' : i === ranked.length - 1 ? ' mrow-bot' : ''}">
       <span class="rk">${i + 1}</span>
-      <span class="nm">${emoji} ${p}<span class="bar" style="width:${w}px"></span></span>
-      <span class="amt">${latest[p].toFixed(2)}</span>
+      <span class="nm">
+        <span class="pdot" style="background:${pc}"></span>
+        ${p}${tag}
+        <span class="bar" style="width:${w}px;background:${pc}"></span>
+      </span>
+      <span class="amt">${latest[p].toFixed(0)} kr</span>
       <span class="chg ${f.cls}">${f.s}</span>
     </div>`;
   }).join('');
 
   // index chips (OMXS30 + S&P 500, normalised to start)
   renderIndexChips(days);
+  renderStatsBar();
   renderChart(days, series, players);
   renderHistory();
 }
@@ -515,16 +524,19 @@ function initBetting(onUpdate) {
 function updateBackendStatus() {
   const el = $('#backend-status'); if (!el) return;
   const exportRow = $('#export-row');
+  const guide = $('#firebase-guide');
   if (BETTING.mode === 'live') {
     el.textContent = '🟢 Live';
     el.className = 'backend-status live';
     el.title = 'Alla ser dina ändringar direkt';
     if (exportRow) exportRow.classList.add('hidden');
+    if (guide) guide.classList.add('hidden');
   } else {
     el.textContent = '💾 Lokalt läge';
     el.className = 'backend-status local';
     el.title = 'Sparas i din webbläsare. Committa betting.json för att dela.';
     if (exportRow) exportRow.classList.remove('hidden');
+    if (guide) guide.classList.remove('hidden');
   }
 }
 
@@ -569,6 +581,7 @@ function handleSubmit() {
     const dlabel = swDate.format(new Date(date + 'T12:00:00'));
     msg.textContent = `✓ Sparat: ${player} ${amount.toFixed(0)} kr för ${dlabel}`;
     $('#f-amount').value = '';
+    fireConfetti();
   }).catch((e) => {
     msg.className = 'submit-msg err';
     msg.textContent = 'Kunde inte spara: ' + e.message;
@@ -594,7 +607,74 @@ function exportBetting() {
 }
 
 /* ============================================================
-   COUNTDOWN + MEME + NAV
+   CONFETTI
+   ============================================================ */
+function fireConfetti() {
+  const cv = document.getElementById('confetti-canvas'); if (!cv) return;
+  const W = window.innerWidth, H = window.innerHeight;
+  cv.width = W; cv.height = H; cv.style.display = 'block';
+  const cols = ['#ff2d78','#19e3d6','#c6ff3d','#ffd23f','#8a5cff','#34e29b','#ff8a3d'];
+  const pts = Array.from({ length: 80 }, () => ({
+    x: W * Math.random(), y: -8 - Math.random() * 30,
+    vx: (Math.random() - .5) * 5, vy: 3 + Math.random() * 4,
+    rot: Math.random() * 360, rs: (Math.random() - .5) * 7,
+    w: 7 + Math.random() * 7, h: 4 + Math.random() * 4,
+    c: cols[Math.floor(Math.random() * cols.length)],
+  }));
+  let t0 = null;
+  const ctx = cv.getContext('2d');
+  function frame(ts) {
+    if (!t0) t0 = ts;
+    const e = (ts - t0) / 1000;
+    ctx.clearRect(0, 0, W, H);
+    let any = false;
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += .13; p.rot += p.rs;
+      const alpha = Math.max(0, 1 - Math.max(0, e - .5) / 1.5);
+      if (p.y < H + 20 && alpha > 0) any = true;
+      ctx.save(); ctx.globalAlpha = alpha;
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    if (any) requestAnimationFrame(frame);
+    else { ctx.clearRect(0, 0, W, H); cv.style.display = 'none'; }
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ============================================================
+   STATS BAR
+   ============================================================ */
+function renderStatsBar() {
+  const el = $('#stats-bar'); if (!el || !DATA.fixtures || !DATA.results) return;
+  const played = Object.values(DATA.results.matches).filter(r => r && r.status === 'FINISHED').length;
+  const total = DATA.fixtures.matches.length;
+  const pct = total ? Math.round(played / total * 100) : 0;
+  const finalUTC = new Date('2026-07-19T19:00:00Z');
+  const daysLeft = Math.max(0, Math.ceil((finalUTC - new Date()) / 864e5));
+
+  const { series, players, start } = moneySeries();
+  const latest = {}; players.forEach(p => latest[p] = series[p].length ? series[p][series[p].length - 1] : start);
+  const leader = players.slice().sort((a, b) => latest[b] - latest[a])[0];
+  const leaderAmt = leader ? latest[leader] : null;
+  const leaderHtml = leader
+    ? `<span class="sb-leader">👑 ${leader}${leaderAmt && leaderAmt !== start ? ' · ' + leaderAmt.toFixed(0) + ' kr' : ''}</span>`
+    : '';
+
+  el.innerHTML = `
+    <div class="sb-track"><div class="sb-fill" style="width:${pct}%"></div></div>
+    <div class="sb-row">
+      <span>${played}/${total} matcher</span>
+      <span class="sb-dot">·</span>
+      <span>${daysLeft} dagar kvar</span>
+      <span class="sb-dot">·</span>
+      ${leaderHtml}
+    </div>`;
+}
+
+/* ============================================================
+   COUNTDOWN + NAV
    ============================================================ */
 function renderCountdown() {
   const now = new Date();
@@ -640,10 +720,6 @@ function wire() {
   $('#f-submit').addEventListener('click', handleSubmit);
   $('#f-amount').addEventListener('keydown', (e) => { if (e.key === 'Enter') handleSubmit(); });
   $('#export-json').addEventListener('click', exportBetting);
-  $('#meme-ticker').textContent = MEMES[Math.floor(Math.random() * MEMES.length)];
-  $('#foot-meme').textContent = '"' + ['Det är inte spelmissbruk om det är VM.',
-    'House always wins. Utom mot gänget, förhoppningsvis.',
-    'Vi spelar inte för pengarna. Vi spelar för skammen.'][Math.floor(Math.random() * 3)] + '" — Anonym i gänget';
 }
 function flash(sel, txt) {
   const el = $(sel), old = el.textContent; el.textContent = txt;
@@ -672,13 +748,10 @@ async function init() {
   populateForm();
   renderSchedule();
   renderCountdown();
+  renderStatsBar();
   setInterval(renderCountdown, 60000);
+  setInterval(renderStatsBar, 60000);
   // betting: live via Firebase if configured, else local. onUpdate re-renders money view.
   initBetting(renderMoney);
-
-  if (DATA.results.updated) {
-    $('#data-updated').textContent = 'Senast uppdaterad: ' +
-      new Date(DATA.results.updated).toLocaleString('sv-SE', { timeZone: TZ });
-  }
 }
 document.addEventListener('DOMContentLoaded', init);
