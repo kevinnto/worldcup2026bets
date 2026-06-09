@@ -77,6 +77,22 @@ These rules let your group of friends read and write, and reject values that are
           ".validate": "newData.isNumber() && newData.val() >= 0"
         }
       }
+    },
+    "bets": {
+      ".read": true,
+      ".write": true,
+      "$date": {
+        "$player": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        }
+      }
+    },
+    "predictions": {
+      ".read": true,
+      ".write": true,
+      "$player": {
+        ".validate": "newData.hasChildren(['submitted'])"
+      }
     }
   }
 }
@@ -132,11 +148,28 @@ It looks like this:
 
 ## How betting works
 
-Everyone starts at 200 SEK.
+Everyone starts at 200 SEK. The amount you enter is always your balance **at the end of that day** — not the change, the running total. Days with no entry inherit the previous day's value.
 
-**Live mode (Firebase configured):** go to **Stålarna**, choose your player and the day, type your current balance, and click **Spara**. It writes to the shared database and every open site updates within a second. Days inherit the previous day's value until someone enters a new one.
+**Live mode (Firebase configured):** go to **Stålarna**, choose your player and the day, type your end-of-day balance, optionally write what you bet on, and click **Spara**. It writes to the shared database and every open site updates within a second.
 
 **Local mode (no Firebase):** the same form saves to your browser only. Click **Ladda ner betting.json** to download the file and commit it to `data/betting.json` so the group sees the numbers. Nominate one scorekeeper to avoid conflicting commits.
+
+**Bet notes (optional):** the "Vad satsade du på?" field lets each person record what they bet on that day. It is optional and shows up in the player detail view.
+
+**Player detail:** click any player (in the leaderboard or the leader card) to open a panel with their balance curve, a day-by-day table of end-of-day balances and daily change, and what they bet on each day.
+
+**The chart:** hover (or touch) any line to highlight it, dim the others, and show a label with that player's name, balance, and percentage — so you can follow a single line through the tangle.
+
+## The prediction game (Tips tab)
+
+A skill layer alongside the money pool. Before the first kick-off, each player predicts the exact score of all 72 group-stage matches plus a set of bonus picks, then earns points as results come in.
+
+- **Deadline:** the tab locks automatically at the first match kick-off (derived from `fixtures.json`). Before the deadline only your own entry is editable and others' picks stay hidden; after it, everything is read-only and the league + audit open up
+- **Point system:** exact score 5 p · right result + goal difference 3 p · right result (1/X/2) 2 p · wrong 0 p. Bonus: correct group winner 3 p (×12), correct finalist 5 p (×2), correct champion 10 p
+- **Tipsligan (league):** ranks everyone who submitted in time; points are computed live from results, group standings and the resolved bracket
+- **Audit:** click any player in the league to see their full sheet — every group match with their pick, the actual score, and points earned, plus the bonus picks. Nothing is hidden after the deadline
+
+Predictions live in Firebase under `predictions/<player>`, using the same live-sync and local-fallback behaviour as the betting pool.
 
 ## Editing results by hand
 
