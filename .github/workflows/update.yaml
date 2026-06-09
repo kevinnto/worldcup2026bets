@@ -5,9 +5,9 @@ name: Update WC2026 data
 
 on:
   schedule:
-    # Every 3 hours (UTC). World Cup matches play US afternoon/evening,
+    # Every 10 minutes (UTC). World Cup matches play US afternoon/evening,
     # which is European night/early morning, so this covers same-day refresh.
-    - cron: "0 */3 * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch: {}
 
 # Required so the job can push the updated data files back to the repo.
