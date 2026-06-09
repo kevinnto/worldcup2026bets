@@ -311,7 +311,7 @@ function tournamentDays() {
   const ms = DATA.fixtures.matches.map(m => kickoff(m).key).sort();
   const start = ms[0], end = ms[ms.length - 1];
   const out = [];
-  let d = new Date(start + 'T12:00:00');
+  let d = new Date(new Date(start + 'T12:00:00').getTime() - 864e5); // day before kickoff = 200 baseline
   const endD = new Date(end + 'T12:00:00');
   while (d <= endD) { out.push(swKey.format(d)); d = new Date(d.getTime() + 864e5); }
   return out;
@@ -1045,7 +1045,7 @@ function renderStatsBar() {
     <div class="sb-row">
       <span>${played}/${total} matcher</span>
       <span class="sb-dot">·</span>
-      <span>${daysLeft} dagar kvar</span>
+      <span>${daysLeft} dagar till finalen</span>
       <span class="sb-dot">·</span>
       ${leaderHtml}
     </div>`;
@@ -1250,7 +1250,7 @@ function buildTipForm() {
       </div>
     </div>
     <div class="tip-actions">
-      <button id="tip-save" class="btn-primary">💾 Spara mina tips</button>
+      <button id="tip-save" class="btn btn-primary tip-save-btn">💾 Spara mina tips</button>
       <span id="tip-msg" class="submit-msg"></span>
     </div>`;
   document.getElementById('tip-player').addEventListener('change', e => {

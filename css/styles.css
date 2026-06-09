@@ -169,7 +169,7 @@ main{max-width:var(--maxw);margin:0 auto;padding:18px 16px 40px;position:relativ
 .gtable th{color:var(--muted);font-weight:700;text-align:right;padding:4px 5px;font-size:11px;border-bottom:1px solid var(--line)}
 .gtable th.tl,.gtable td.tl{text-align:left}
 .gtable td{padding:7px 5px;text-align:right;border-bottom:1px solid rgba(255,255,255,.04)}
-.gtable td.tl{display:flex;align-items:center;gap:7px;font-weight:600}
+.gtable td.tl{display:flex;align-items:center;gap:7px;font-weight:600;white-space:nowrap}
 .gtable td .flag{font-size:18px}
 .gtable tr.q1 td:first-child,.gtable tr.q2 td:first-child{box-shadow:inset 3px 0 0 var(--good)}
 .gtable tr.q3 td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
@@ -476,6 +476,9 @@ table.egrid tr.today-row td{background:rgba(198,255,61,.06)}
 .tip-bonus-grid select,.tip-bonus-grid input{background:var(--input-bg);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 12px;font-family:'Sora',sans-serif;font-weight:600;font-size:14px}
 .tip-bonus-grid select:focus,.tip-bonus-grid input:focus{outline:none;border-color:var(--cyan)}
 .tip-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:16px}
+.tip-save-btn{padding:13px 26px;font-size:15px;border-radius:12px;box-shadow:0 8px 20px -10px var(--lime)}
+.tip-save-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.tip-save-btn:active{transform:translateY(0)}
 
 /* leaderboard */
 .tip-row{display:grid;grid-template-columns:36px 1fr auto;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);margin-bottom:7px}

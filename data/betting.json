@@ -4,7 +4,7 @@
   "players": ["Arvid", "Edvin", "Kevin", "Felix", "Wictor", "Linus", "Filip"],
   "note": "balances[date][player] = saldo i SLUTET av dagen. bets[date][player] = vad personen satsade pa (valfritt). Alla startar pa 200 SEK.",
   "balances": {
-    "2026-06-11": { "Arvid": 200, "Edvin": 200, "Kevin": 200, "Felix": 200, "Wictor": 200, "Linus": 200, "Filip": 200 }
+    "2026-06-10": { "Arvid": 200, "Edvin": 200, "Kevin": 200, "Felix": 200, "Wictor": 200, "Linus": 200, "Filip": 200 }
   },
   "bets": {}
 }

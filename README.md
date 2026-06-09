@@ -59,6 +59,40 @@ Estimated time: ~10 minutes. Firebase free tier (Spark) is more than enough for 
 4. When asked about security rules, choose **Start in locked mode**
 5. Click **Enable**
 
+### Step 3 — Set the security rules
+
+These rules let your group of friends read and write, and sanity-check the values on writes. Read and write are granted at the root because the app reads the whole database in one call, and Realtime Database does not inherit read permission upward from child nodes.
+
+1. In the Realtime Database page, click the **Rules** tab
+2. Delete everything in the editor and paste the following:
+
+```json
+{
+  "rules": {
+    ".read": true,
+    ".write": true,
+    "balances": {
+      "$date": {
+        "$player": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        }
+      }
+    },
+    "bets": {
+      "$date": {
+        "$player": {
+          ".validate": "newData.isString() && newData.val().length <= 200"
+        }
+      }
+    },
+    "predictions": {
+      "$player": {
+        ".validate": "newData.hasChildren(['submitted'])"
+      }
+    }
+  }
+}
+```
 
 3. Click **Publish**
 
@@ -73,6 +107,17 @@ The rules are public-read-write, which is fine for a small friend group (the wor
 5. Enter any nickname (e.g. `vm2026`) and click **Register app**
 6. You will see a code block containing a `firebaseConfig` object — copy the whole object (from `{` to `}`)
 
+It looks like this:
+
+```js
+{
+  apiKey: "AIza...",
+  authDomain: "vm2026-gänget.firebaseapp.com",
+  databaseURL: "https://vm2026-gänget-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "vm2026-gänget",
+  appId: "1:123456789:web:abc123"
+}
+```
 
 ### Step 5 — Paste and deploy
 

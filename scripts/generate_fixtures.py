@@ -20,7 +20,7 @@ TEAMS = {
     "KOR": ("Sydkorea", "Korea Republic", "🇰🇷"),
     "CZE": ("Tjeckien", "Czechia", "🇨🇿"),
     "CAN": ("Kanada", "Canada", "🇨🇦"),
-    "BIH": ("Bosnien-Hercegovina", "Bosnia and Herzegovina", "🇧🇦"),
+    "BIH": ("Bosnien", "Bosnia and Herzegovina", "🇧🇦"),
     "QAT": ("Qatar", "Qatar", "🇶🇦"),
     "SUI": ("Schweiz", "Switzerland", "🇨🇭"),
     "BRA": ("Brasilien", "Brazil", "🇧🇷"),
