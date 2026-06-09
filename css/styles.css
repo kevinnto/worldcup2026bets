@@ -173,11 +173,14 @@ main{max-width:var(--maxw);margin:0 auto;padding:18px 16px 40px;position:relativ
 .gtable td .flag{font-size:18px}
 .gtable tr.q1 td:first-child,.gtable tr.q2 td:first-child{box-shadow:inset 3px 0 0 var(--good)}
 .gtable tr.q3 td:first-child{box-shadow:inset 3px 0 0 var(--gold)}
+.gtable tr.q3-out td:first-child{box-shadow:inset 3px 0 0 var(--muted)}
+.gtable tr.q3-out td{opacity:.62}
 .gtable td.pts{font-family:'Space Mono',monospace;font-weight:700;color:var(--ink)}
 .qkey{display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--muted)}
 .qkey span::before{content:"";display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
 .qkey .k1::before{background:var(--good)}
 .qkey .k3::before{background:var(--gold)}
+.qkey .kout::before{background:var(--muted)}
 
 /* ---------- bracket ---------- */
 .bracket-scroll{overflow-x:auto;padding:8px 2px 18px}

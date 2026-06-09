@@ -1,6 +1,6 @@
 # VM 2026 Betting Tracker
 
-A static website for tracking betting money during the 2026 FIFA World Cup (11 June to 19 July 2026) for a group of friends. Hosted on GitHub Pages. Match results, the OMXS30 index, and the S&P 500 are refreshed automatically by a daily GitHub Action. Betting is shared live via Firebase, so anyone can submit their balance and everyone's site updates instantly.
+A static website for tracking betting money during the 2026 FIFA World Cup (11 June to 19 July 2026) for a group of friends. Hosted on GitHub Pages. Match results, the OMXS30 index, and the S&P 500 are refreshed automatically by a GitHub Action every 10 minutes. Betting is shared live via Firebase, so anyone can submit their balance and everyone's site updates instantly.
 
 ## Views
 
@@ -140,7 +140,9 @@ It looks like this:
 
 1. Go to **Settings → Actions → General → Workflow permissions**, select **Read and write permissions**, and save (this lets the Action commit refreshed data)
 2. Optional but recommended: register a free token at football-data.org, then add it under **Settings → Secrets and variables → Actions** as a secret named `FOOTBALL_DATA_TOKEN` for the most reliable scores. Without it, the script falls back to the free TheSportsDB source
-3. The workflow runs every 3 hours. To run it immediately, open the **Actions** tab, select "Update WC2026 data", and click **Run workflow**
+3. The workflow runs every 10 minutes (it only commits when a score or index value actually changes, so quiet hours create no commits). To run it immediately, open the **Actions** tab, select "Update WC2026 data", and click **Run workflow**
+
+Open pages also poll the data every minute and re-render themselves, so during a match you see new scores roughly within 10 to 15 minutes without touching anything. Knockout results update automatically too: the updater resolves the bracket from results and stores the actual teams with each score, so third-place-decided matchups and every later round fill in on their own. You can still hand-edit `data/results.json` if a source is ever slow.
 
 ## How betting works
 

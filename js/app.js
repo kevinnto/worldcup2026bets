@@ -107,6 +107,8 @@ function resolveRef(ref, standings) {
 }
 
 function koTeams(m, standings) {
+  const r = DATA.results.matches[m.id];
+  if (r && r.home && r.away) return { home: r.home, away: r.away };
   return { home: resolveRef(m.homeRef, standings), away: resolveRef(m.awayRef, standings) };
 }
 
@@ -193,13 +195,29 @@ function renderSchedule() {
 /* ============================================================
    VIEW: GROUPS
    ============================================================ */
+function bestThirds(standings) {
+  const thirds = [];
+  for (const g of Object.keys(DATA.fixtures.groups)) {
+    const st = standings[g];
+    if (!st || !st.complete) return null; // need every group finished to rank thirds
+    const t = st.table[2];
+    if (t) thirds.push({ g, c: t.c, pts: t.pts, gd: t.gd, gf: t.gf });
+  }
+  thirds.sort((x, y) => y.pts - x.pts || y.gd - x.gd || y.gf - x.gf || x.g.localeCompare(y.g));
+  return new Set(thirds.slice(0, 8).map(t => t.c));
+}
+
 function renderGroups() {
   const standings = allStandings();
+  const thirds = bestThirds(standings); // Set of 8 qualifying codes, or null until the group stage is over
   const body = $('#groups-body');
   body.innerHTML = Object.keys(DATA.fixtures.groups).map(g => {
     const st = standings[g];
     const rows = st.table.map((t, i) => {
-      const cls = i === 0 ? 'q1' : i === 1 ? 'q2' : i === 2 ? 'q3' : '';
+      let cls = '';
+      if (i === 0) cls = 'q1';
+      else if (i === 1) cls = 'q2';
+      else if (i === 2) cls = thirds ? (thirds.has(t.c) ? 'q3' : 'q3-out') : 'q3';
       const tt = team(t.c);
       return `<tr class="${cls}">
         <td class="tl"><span class="flag">${tt.flag}</span>${tt.sv}</td>
@@ -214,7 +232,7 @@ function renderGroups() {
         <thead><tr><th class="tl">Lag</th><th>S</th><th>V</th><th>O</th><th>F</th><th>Mål</th><th>+/−</th><th>P</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
-      <div class="qkey"><span class="k1">Vidare</span><span class="k3">Möjlig 3:a</span></div>
+      <div class="qkey"><span class="k1">Vidare</span><span class="k3">${thirds ? '3:a vidare' : 'Möjlig 3:a'}</span>${thirds ? '<span class="kout">3:a utslagen</span>' : ''}</div>
     </div>`;
   }).join('');
 }
@@ -1433,6 +1451,36 @@ function flash(sel, txt) {
 /* ============================================================
    INIT
    ============================================================ */
+function rerenderActive() {
+  renderCountdown();
+  renderStatsBar();
+  const v = document.querySelector('.view.active');
+  const id = v ? v.id : '';
+  if (id === 'view-schedule') renderSchedule();
+  else if (id === 'view-groups') renderGroups();
+  else if (id === 'view-bracket') renderBracket();
+  else if (id === 'view-money') renderMoney();
+  else if (id === 'view-tips') renderTips();
+}
+
+// poll the static JSON so an open page updates itself without a manual reload.
+// cache-busting query bypasses the GitHub Pages edge cache; failures are ignored.
+async function refreshData() {
+  try {
+    const bust = '?t=' + Date.now();
+    const [results, omx, sp500] = await Promise.all([
+      getJSON('./data/results.json' + bust),
+      getJSON('./data/omx.json' + bust).catch(() => null),
+      getJSON('./data/sp500.json' + bust).catch(() => null),
+    ]);
+    let changed = false;
+    if (results && results.updated !== (DATA.results && DATA.results.updated)) { DATA.results = results; changed = true; }
+    if (omx && omx.updated !== (DATA.omx && DATA.omx.updated)) { DATA.omx = omx; changed = true; }
+    if (sp500 && sp500.updated !== (DATA.sp500 && DATA.sp500.updated)) { DATA.sp500 = sp500; changed = true; }
+    if (changed) rerenderActive();
+  } catch (e) { /* offline or transient: keep current data */ }
+}
+
 async function init() {
   try {
     const [fixtures, results, omx, sp500, betting] = await Promise.all([
@@ -1458,6 +1506,7 @@ async function init() {
   renderStatsBar();
   setInterval(renderCountdown, 60000);
   setInterval(renderStatsBar, 60000);
+  setInterval(refreshData, 60000);
   // betting + predictions: live via Firebase if configured, else local. onUpdate re-renders.
   initBetting(() => {
     renderMoney();
