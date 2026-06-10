@@ -18,7 +18,7 @@ OMXS30 source: Stooq CSV (symbol ^OMX), no key needed.
 Nothing here ever deletes existing scores: a failed fetch leaves the file as-is,
 so the website never breaks. You can also edit data/results.json by hand.
 """
-import json, os, re, sys, unicodedata, urllib.request, urllib.error
+import json, os, re, sys, time, unicodedata, urllib.request, urllib.error, urllib.parse
 from datetime import datetime, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -392,37 +392,116 @@ def update_standings(fixtures):
           + (f" + {', '.join(extra)}" if extra else ""))
 
 
-def update_index(path, stooq_symbol, default_symbol):
-    idx = load(path, {"symbol": default_symbol, "history": []})
-    url = "https://stooq.com/q/d/l/?s=%s&i=d" % stooq_symbol
+BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+
+
+def _age_hours(ts, now):
+    if not ts:
+        return 1e9
     try:
-        csv = http_get(url)
-    except Exception as e:
-        print(f"Stooq {default_symbol} failed: {e}", file=sys.stderr)
-        return
-    rows = [r for r in csv.strip().splitlines() if r and r[0].isdigit()]
-    hist = {x["date"]: x for x in idx.get("history", [])}
-    added = 0
-    for r in rows:
-        parts = r.split(",")
-        if len(parts) < 5:
+        t = datetime.strptime(ts[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+    except Exception:
+        return 1e9
+    return (now - t).total_seconds() / 3600.0
+
+
+def http_get_retry(url, tries=3, headers=None, timeout=30):
+    last = None
+    for i in range(tries):
+        try:
+            return http_get(url, headers=headers, timeout=timeout)
+        except Exception as e:
+            last = e
+            if i < tries - 1:
+                time.sleep(2 * (i + 1))
+    raise last
+
+
+def _closes_from_stooq(symbol):
+    csv = http_get_retry("https://stooq.com/q/d/l/?s=%s&i=d" % symbol, headers={"User-Agent": BROWSER_UA})
+    # stooq returns a short text page (e.g. "Exceeded the daily hits limit") instead of CSV when throttled
+    if len(csv) < 200 and "limit" in csv.lower():
+        raise RuntimeError("stooq throttled: " + csv.strip()[:80])
+    out = []
+    for r in csv.strip().splitlines():
+        if not r or not r[0].isdigit():
             continue
-        date, close = parts[0], parts[4]
-        if date < START_DATE or close in ("", "N/D"):
+        p = r.split(",")
+        if len(p) < 5:
+            continue
+        date, close = p[0], p[4]
+        if close in ("", "N/D"):
             continue
         try:
-            c = float(close)
+            out.append((date, float(close)))
         except ValueError:
+            pass
+    return out
+
+
+def _closes_from_yahoo(symbol):
+    url = ("https://query1.finance.yahoo.com/v8/finance/chart/%s?range=3mo&interval=1d"
+           % urllib.parse.quote(symbol))
+    data = json.loads(http_get_retry(url, headers={"User-Agent": BROWSER_UA}))
+    res = (data.get("chart", {}).get("result") or [None])[0]
+    if not res:
+        return []
+    ts = res.get("timestamp") or []
+    closes = (((res.get("indicators") or {}).get("quote") or [{}])[0]).get("close") or []
+    out = []
+    for t, c in zip(ts, closes):
+        if c is None:
+            continue
+        date = datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d")
+        out.append((date, float(c)))
+    return out
+
+
+def update_index(path, stooq_symbol, yahoo_symbol, default_symbol, force=False):
+    """Index closes change once per trading day, so this self-throttles to ~1 fetch/day
+    (independent of the 15-min results cron). Tries Stooq first, then Yahoo Finance, with retries.
+    On total failure it keeps the last good data. Forced (or first-ever) runs always fetch."""
+    idx = load(path, {"symbol": default_symbol, "history": []})
+    now = datetime.now(timezone.utc)
+    fname = os.path.basename(path)
+    if not force and idx.get("history"):
+        if _age_hours(idx.get("updated"), now) < 20:      # already have today's data
+            return
+        if _age_hours(idx.get("checked"), now) < 1.5:     # back off after a recent attempt
+            return
+    idx["checked"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    rows, src = [], None
+    for name, fn, sym in (("Stooq", _closes_from_stooq, stooq_symbol),
+                          ("Yahoo", _closes_from_yahoo, yahoo_symbol)):
+        try:
+            rows = fn(sym)
+            if rows:
+                src = name
+                break
+        except Exception as e:
+            print(f"{name} {default_symbol} failed: {e}", file=sys.stderr)
+
+    if not rows:  # both sources failed; persist the attempt time (back-off) and keep existing data
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(idx, f, ensure_ascii=False, indent=2)
+        print(f"{fname}: no data this run, kept {len(idx.get('history', []))} closes", file=sys.stderr)
+        return
+
+    hist = {x["date"]: x for x in idx.get("history", [])}
+    added = 0
+    for date, c in rows:
+        if date < START_DATE:
             continue
         if date not in hist:
             added += 1
         hist[date] = {"date": date, "close": c}
     idx["history"] = [hist[k] for k in sorted(hist)]
-    idx["updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    idx["updated"] = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(idx, f, ensure_ascii=False, indent=2)
-    fname = os.path.basename(path)
-    print(f"{fname}: {len(idx['history'])} closes ({added} new)")
+    print(f"{fname}: {len(idx['history'])} closes ({added} new, via {src})")
 
 
 def main():
@@ -432,8 +511,9 @@ def main():
         sys.exit(1)
     update_results(fixtures)
     update_standings(fixtures)
-    update_index(OMX, "%5Eomx", "^OMX")
-    update_index(SP500, "%5Espx", "^SPX")
+    force_index = os.environ.get("INDEX_FORCE", "").strip() == "1"
+    update_index(OMX, "%5Eomx", "^OMX", "^OMX", force=force_index)
+    update_index(SP500, "%5Espx", "^GSPC", "^SPX", force=force_index)
 
 
 if __name__ == "__main__":
