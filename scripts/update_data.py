@@ -4,6 +4,8 @@ Daily updater for the VM 2026 tracker. Run by GitHub Actions.
 
 Writes:
   data/results.json  — scores/status keyed by our internal match ids (m1..m104)
+  data/standings.json— official group tables (football-data.org); used for the authoritative
+                       within-group order so the third-placed teams are exactly FIFA's
   data/omx.json      — OMXS30 daily closes (normalised to 200 in the browser)
   data/sp500.json    — S&P 500 daily closes (normalised to 200 in the browser)
 
@@ -24,7 +26,9 @@ FIXTURES = os.path.join(ROOT, "data", "fixtures.json")
 RESULTS = os.path.join(ROOT, "data", "results.json")
 OMX = os.path.join(ROOT, "data", "omx.json")
 SP500 = os.path.join(ROOT, "data", "sp500.json")
-START_DATE = "2026-06-10"  # day before kickoff, baseline for the index
+STANDINGS = os.path.join(ROOT, "data", "standings.json")
+DISCIPLINE = os.path.join(ROOT, "data", "discipline.json")  # optional manual/feed input (fair-play + override)
+START_DATE = "2026-06-10"  # anchor day for index normalisation (= betting baseline)
 
 ALIASES = {
     "korearepublic": "southkorea", "republicofkorea": "southkorea", "korea": "southkorea",
@@ -297,6 +301,97 @@ def update_results(fixtures):
     print(f"results.json: {gcount} group + {kcount} knockout matched, {len(results['matches'])} total")
 
 
+def fetch_standings(token, fixtures):
+    """Official group tables from football-data.org -> {grp: {order:[codes], rows:{...}, complete}}.
+
+    Using the provider's order means FIFA's full within-group tiebreakers (head-to-head,
+    fair play) are already applied, so the third-placed team of each group is authoritative.
+    """
+    url = "https://api.football-data.org/v4/competitions/WC/standings"
+    data = json.loads(http_get(url, headers={"X-Auth-Token": token}))
+    code_by_norm = {norm(t["en"]): code for code, t in fixtures["teams"].items()}
+    groups = {}
+    for s in data.get("standings", []):
+        if s.get("type") != "TOTAL":      # skip HOME/AWAY split tables
+            continue
+        grp = (s.get("group") or "").replace("GROUP_", "").replace("Group ", "").strip().upper()
+        if grp not in fixtures["groups"]:
+            continue
+        order, rows, complete = [], {}, True
+        for r in s.get("table", []):
+            code = code_by_norm.get(norm(r.get("team", {}).get("name", "")))
+            if not code:
+                continue
+            order.append(code)
+            rows[code] = {"pts": r.get("points", 0), "gd": r.get("goalDifference", 0),
+                          "gf": r.get("goalsFor", 0), "ga": r.get("goalsAgainst", 0),
+                          "pld": r.get("playedGames", 0), "w": r.get("won", 0),
+                          "d": r.get("draw", 0), "l": r.get("lost", 0)}
+            if r.get("playedGames", 0) < 3:
+                complete = False
+        # only accept a group whose four teams all mapped cleanly
+        if len(order) == len(fixtures["groups"][grp]):
+            groups[grp] = {"order": order, "rows": rows, "complete": complete}
+    return groups
+
+
+# FIFA team-conduct ("fair play") points: only the single worst sanction per player per match counts.
+# Values per FIFA's 2026 regulations: single yellow -1, indirect red (2nd yellow) -3, direct red -4,
+# yellow + direct red (same player, same match) -5. Higher (less negative) total ranks higher.
+FP_VALUES = {"yellow": -1, "yellow_red": -3, "red": -4, "yellow_and_red": -5}
+def fair_play_points(counts):
+    """counts = worst-per-player sanction tallies, e.g. {'yellow':5,'yellow_red':1,'red':0,'yellow_and_red':0}."""
+    return sum(FP_VALUES[k] * int(counts.get(k, 0)) for k in FP_VALUES)
+
+
+def update_standings(fixtures):
+    """Write official group tables, then fold in optional fair-play points and an official thirds
+    override from data/discipline.json (hand-entered, or produced by a paid card-data feed).
+
+    Note: card/booking data is NOT on football-data.org's free tier (deep-data add-on only), so the
+    automatic fair-play tiebreaker only activates if discipline.json supplies it. Everything else
+    (points, goal difference, goals scored, official within-group order) is covered for free.
+    """
+    out = load(STANDINGS, {"groups": {}})
+    token = os.environ.get("FOOTBALL_DATA_TOKEN", "").strip()
+    if token:
+        try:
+            g = fetch_standings(token, fixtures)
+            if g:
+                out["groups"] = g
+            else:
+                print("standings: nothing parsed (kept existing)", file=sys.stderr)
+        except Exception as e:
+            print(f"standings fetch failed: {e}", file=sys.stderr)
+
+    # optional manual/feed inputs
+    disc = load(DISCIPLINE, {})
+    fp = disc.get("fp", {})  # {teamCode: number} or {teamCode: {yellow:..,yellow_red:..,red:..,yellow_and_red:..}}
+    for grp in out.get("groups", {}).values():
+        for code, row in grp.get("rows", {}).items():
+            if code in fp:
+                v = fp[code]
+                row["fp"] = v if isinstance(v, (int, float)) else fair_play_points(v)
+    out.pop("thirdsOverride", None)
+    ov = disc.get("thirdsOverride")
+    if isinstance(ov, list) and len(ov) == 8:
+        out["thirdsOverride"] = ov
+
+    if not out.get("groups") and "thirdsOverride" not in out:
+        return  # nothing to write (no token, no manual data)
+    out["updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    with open(STANDINGS, "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, indent=2)
+    done = sum(1 for g in out.get("groups", {}).values() if g.get("complete"))
+    extra = []
+    if any("fp" in r for g in out.get("groups", {}).values() for r in g.get("rows", {}).values()):
+        extra.append("fair-play")
+    if "thirdsOverride" in out:
+        extra.append("thirds-override")
+    print(f"standings.json: {len(out.get('groups', {}))} groups ({done} complete)"
+          + (f" + {', '.join(extra)}" if extra else ""))
+
+
 def update_index(path, stooq_symbol, default_symbol):
     idx = load(path, {"symbol": default_symbol, "history": []})
     url = "https://stooq.com/q/d/l/?s=%s&i=d" % stooq_symbol
@@ -336,6 +431,7 @@ def main():
         print("fixtures.json missing", file=sys.stderr)
         sys.exit(1)
     update_results(fixtures)
+    update_standings(fixtures)
     update_index(OMX, "%5Eomx", "^OMX")
     update_index(SP500, "%5Espx", "^SPX")
 
