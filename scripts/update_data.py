@@ -512,7 +512,8 @@ def main():
     update_results(fixtures)
     update_standings(fixtures)
     force_index = os.environ.get("INDEX_FORCE", "").strip() == "1"
-    update_index(OMX, "%5Eomx", "^OMX", "^OMX", force=force_index)
+    # OMXS30: Yahoo serves the historical time series under ^OMXS30 (legacy ^OMX has no chart data)
+    update_index(OMX, "%5Eomx", "^OMXS30", "^OMX", force=force_index)
     update_index(SP500, "%5Espx", "^GSPC", "^SPX", force=force_index)
 
 
