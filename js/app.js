@@ -386,7 +386,7 @@ function tournamentDays() {
   const start = ms[0], end = ms[ms.length - 1];
   const out = [];
   let d = new Date(new Date(start + 'T12:00:00').getTime() - 864e5); // day before kickoff = 200 baseline
-  const endD = new Date(end + 'T12:00:00');
+  const endD = new Date(new Date(end + 'T12:00:00').getTime() + 864e5); // +1 day: log final standings the morning after the final
   while (d <= endD) { out.push(swKey.format(d)); d = new Date(d.getTime() + 864e5); }
   return out;
 }
@@ -1179,8 +1179,9 @@ let _auditPlayer = null;
 
 function nowDate() { return new Date(); }
 function predictionDeadline() {
-  const ks = DATA.fixtures.matches.map(m => new Date(m.kickoff).getTime());
-  return new Date(Math.min(...ks));
+  // Phase 1 stays open through the end of 12 June (Europe/Stockholm); individual matches
+  // still lock as they kick off (see buildTipForm) so already-played games can't be backfilled.
+  return new Date('2026-06-12T23:59:59+02:00');
 }
 function predictionsLocked() { return nowDate().getTime() >= predictionDeadline().getTime(); }
 
@@ -1409,7 +1410,7 @@ function renderTips() {
   const intro = document.getElementById('tip-intro');
   if (intro) intro.textContent = locked
     ? 'Tippningen är stängd. Poängen räknas löpande när matcherna spelas. Klicka på en spelare i ligan för att granska allas tips.'
-    : 'Tippa alla gruppspelsmatcher, gruppvinnare, finalister och VM-vinnare före första avsparken. Slutspelslagen tippas i en andra omgång när gruppspelet är klart. Andras tips visas först när tippningen stänger.';
+    : 'Tippa alla gruppspelsmatcher, gruppvinnare, finalister och VM-vinnare innan tippningen stänger (se nedräkningen ovan). Matcher som redan startat är låsta. Slutspelslagen tippas i en andra omgång när gruppspelet är klart. Andras tips visas först när tippningen stänger.';
   renderTipRules();
   const entry = document.getElementById('tip-entry');
   if (entry) {
@@ -1449,9 +1450,11 @@ function buildTipForm() {
   const groups = Object.keys(DATA.fixtures.groups).map(g => {
     const rows = groupMatches(g).map(m => {
       const h = team(m.home), a = team(m.away), pm = M[m.id] || {};
-      return `<div class="tip-match">
+      const started = new Date(m.kickoff).getTime() <= nowDate().getTime();
+      const dis = started ? ' disabled' : '';
+      return `<div class="tip-match${started ? ' locked' : ''}"${started ? ' title="Matchen har startat – låst"' : ''}>
         <span class="tm-team home"><span class="tname">${h.sv}</span><span class="flag">${h.flag}</span></span>
-        <span class="tm-score"><input class="ti-score" type="number" min="0" max="30" inputmode="numeric" data-mid="${m.id}" data-side="h" value="${pm.h ?? ''}"><span class="tm-dash">–</span><input class="ti-score" type="number" min="0" max="30" inputmode="numeric" data-mid="${m.id}" data-side="a" value="${pm.a ?? ''}"></span>
+        <span class="tm-score"><input class="ti-score" type="number" min="0" max="30" inputmode="numeric" data-mid="${m.id}" data-side="h" value="${pm.h ?? ''}"${dis}><span class="tm-dash">${started ? '🔒' : '–'}</span><input class="ti-score" type="number" min="0" max="30" inputmode="numeric" data-mid="${m.id}" data-side="a" value="${pm.a ?? ''}"${dis}></span>
         <span class="tm-team away"><span class="flag">${a.flag}</span><span class="tname">${a.sv}</span></span>
       </div>`;
     }).join('');
