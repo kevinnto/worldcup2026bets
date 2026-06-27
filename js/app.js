@@ -282,8 +282,12 @@ function renderGroups() {
         <td class="pts">${t.pts}</td>
       </tr>`;
     }).join('');
-    return `<div class="group-card">
-      <h3>Grupp ${g}</h3>
+    const done = st.complete;
+    const badge = done
+      ? '<span class="gbadge done">✓ Färdigspelad</span>'
+      : `<span class="gbadge prog">${st.played}/${st.total} spelade</span>`;
+    return `<div class="group-card${done ? ' done' : ''}">
+      <h3><span>Grupp ${g}</span>${badge}</h3>
       <table class="gtable">
         <thead><tr><th class="tl">Lag</th><th>S</th><th>V</th><th>O</th><th>F</th><th>Mål</th><th>+/−</th><th>P</th></tr></thead>
         <tbody>${rows}</tbody>

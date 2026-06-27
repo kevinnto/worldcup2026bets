@@ -164,7 +164,11 @@ main{max-width:var(--maxw);margin:0 auto;padding:18px 16px 40px;position:relativ
 /* ---------- groups ---------- */
 .groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
 .group-card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
-.group-card h3{font-family:'Anton',sans-serif;font-size:20px;color:var(--gold);margin-bottom:10px;letter-spacing:.03em}
+.group-card h3{font-family:'Anton',sans-serif;font-size:20px;color:var(--gold);margin-bottom:10px;letter-spacing:.03em;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.gbadge{font-family:'Inter',system-ui,sans-serif;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;letter-spacing:.02em;white-space:nowrap}
+.gbadge.done{background:var(--good);color:#062b1c;border:0}
+.gbadge.prog{background:var(--input-bg);color:var(--muted);border:1px solid var(--hairline)}
+.group-card.done{border-color:var(--good)}
 .gtable{width:100%;border-collapse:collapse;font-size:13px}
 .gtable th{color:var(--muted);font-weight:700;text-align:right;padding:4px 5px;font-size:11px;border-bottom:1px solid var(--line)}
 .gtable th.tl,.gtable td.tl{text-align:left}
@@ -470,6 +474,9 @@ table.egrid tr.today-row td{background:rgba(198,255,61,.06)}
 .ti-score::-webkit-outer-spin-button,.ti-score::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .ti-score:focus{outline:none;border-color:var(--cyan)}
 .tm-dash{color:var(--muted);font-weight:700}
+.tip-match.locked{opacity:.5}
+.tip-match.locked .tname,.tip-match.locked .tm-dash{color:var(--muted)}
+.ti-score:disabled{background:transparent;border-color:var(--hairline);color:var(--muted);cursor:not-allowed;-webkit-text-fill-color:var(--muted);opacity:1}
 .tip-gw{display:flex;align-items:center;gap:9px;margin:8px 12px 12px;font-size:13px;font-weight:700;color:var(--muted)}
 .tip-gw select{background:var(--input-bg);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:7px 10px;font-family:'Sora',sans-serif;font-weight:600;font-size:13px;flex:1;max-width:240px}
 
