@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-11T01:13:14Z",
+  "updated": "2026-07-11T21:29:39Z",
   "symbol": "^OMX",
   "note": "OMX Stockholm 30 daily close, fetched from Stooq by GitHub Actions. Normalised to 200 client-side.",
   "history": [
@@ -92,5 +92,5 @@
       "close": 3177.77734375
     }
   ],
-  "checked": "2026-07-11T01:13:14Z"
+  "checked": "2026-07-11T21:29:39Z"
 }
